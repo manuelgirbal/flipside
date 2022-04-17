@@ -1,0 +1,90 @@
+---
+title: "Terra votes"
+author: "Manuel Girbal"
+date: "17/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(httr)
+library(jsonlite)
+library(tidyverse)
+```
+
+## Introduction
+
+In this work I'll try to answer one question: how much voting power (measured in LUNA) was used to vote 'YES' for governance proposals in the Terra ecosystem?
+In doing so, I'll differentiate validators vs regular wallets.
+
+
+### Methodology
+Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing both average voting power and number of addresses that voted yes in each proposal, taking into account which addresses are related to Terra validators and which to regular users:
+
+```{sql eval=FALSE}
+select proposal_id::number as id,
+       case
+          when voter in (select address from terra.labels where label_subtype = 'validator') then 'validator'
+          else 'regular'
+       end as validator_vs_regular,
+       count(voter) as n,   
+       avg(voting_power) as mean_voting_power_YES
+from terra.gov_vote
+where option = 'VOTE_OPTION_YES'
+group by proposal_id, validator_vs_regular
+```
+
+```{r include=FALSE}
+data <- GET("https://api.flipsidecrypto.com/api/v2/queries/ddc05329-2885-464a-ae3a-d6433fd528da/data/latest")
+data2 <- rawToChar(data$content)
+data3 <- fromJSON(data2, flatten = TRUE)
+data3 <- as_tibble(
+  data3 %>% 
+  mutate(ID = as.factor(ID))
+  )
+```
+
+
+### Analysis
+First we will see how many addresses voted yes per proposal, and how many belong to validators vs regular users:
+
+```{r echo=FALSE}
+data3 %>% 
+  ggplot(aes(x = ID, y = N)) +
+  geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4000)) +
+  theme(legend.position="bottom",
+        axis.text.x = element_text(size=7))
+```
+
+From this plot we can observe that validators addresses that vote yes tend to be between 5 and 100, while individual user addresses range mostly from 250 to 3500. 
+It all depends on the issue at stake, so taking into account which topic was discussed and voted in each proposal might be helpful to understand participation.
+
+As regards to the average voting power used in each proposal:
+
+```{r echo=FALSE}
+data3 %>% 
+  ggplot(aes(x = ID, y = MEAN_VOTING_POWER_YES)) +
+  geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 600000)) +
+  theme(legend.position="bottom",
+        axis.text.x = element_text(size=7))
+```
+
+
+
+### Conclusion
+.
+
+
+### References
+https://flipsidecrypto.xyz/
+
+https://docs.terra.money/docs/develop/module-specifications/spec-governance.html
+
+https://docs.terra.money/docs/full-node/manage-a-terra-validator/faq.html
+
+
+
+Code used for this publication: https://github.com/manuelgirbal/flipside 

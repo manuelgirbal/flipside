@@ -15,7 +15,7 @@ data <- GET("https://api.flipsidecrypto.com/api/v2/queries/ddc05329-2885-464a-ae
       # else 'regular'
       # end as validator_vs_regular,
       # count(voter) as n,   
-      # avg(voting_power) as mean_voting_power_YES --revisar si es LUNA llano o si hay que sacarle algunos decimales
+      # avg(voting_power) as mean_voting_power_YES
       # from terra.gov_vote
       # where option = 'VOTE_OPTION_YES'
       # group by proposal_id, validator_vs_regular
@@ -28,7 +28,7 @@ data2 <- rawToChar(data$content)
 
 #Finally, we convert the json data of interest into a table:
 data3 <- fromJSON(data2, flatten = TRUE)
-#we could also us this 'flatten = FALSE' if we don't want to automatically flatten nested data frames
+#we could also us 'flatten = FALSE' if we don't want to automatically flatten nested data frames
 
 data3 <- as_tibble(
   data3 %>% 
@@ -37,13 +37,18 @@ data3 <- as_tibble(
 
 data3
 
+#Plotting mean LUNA voting power per proposal ID:
 data3 %>% 
   ggplot(aes(x = ID, y = MEAN_VOTING_POWER_YES)) +
   geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
-  scale_y_continuous(labels = scales::comma, limits = c(0, 600000))
+  scale_y_continuous(labels = scales::comma, limits = c(0, 600000)) +
+  theme(legend.position="bottom",
+        axis.text.x = element_text(size=7))
 
+#Plotting number of wallets/voters per proposal ID:
 data3 %>% 
   ggplot(aes(x = ID, y = N)) +
   geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
-  scale_y_continuous(labels = scales::comma, limits = c(0, 4000))
-
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4000)) +
+  theme(legend.position="bottom",
+        axis.text.x = element_text(size=7))

@@ -11,6 +11,6 @@ str(test) #we're going for $content, which appears to be raw data
 #We then need to convert the raw Unicode into a character vector:
 test2 <- rawToChar(test$content)
 
-#Finally, we conver the json data of interest into a table:
+#Finally, we convert the json data of interest into a table:
 test3 <- fromJSON(test2, flatten = TRUE)
-test4 <- fromJSON(test2, flatten = FALSE)
+#we could also us 'flatten = FALSE' if we don't want to automatically flatten nested data frames
