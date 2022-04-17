@@ -72,10 +72,18 @@ data3 %>%
         axis.text.x = element_text(size=7))
 ```
 
+Here we can see that average voting power from both validators and regular users tends to be more similar, although we already saw that regular users represent more individual addresses than validators. Of course, here we're not taking into account how many delegators have conceded voting power to validators, which should be also interesting to see.
 
+One last note regarding voting power: there are some special proposal IDs which saw peaks between 400k and 600k LUNA from validators, which tells us that those specific issues might have been more critical than others.
 
 ### Conclusion
-.
+From the plots above we can say that there are more individual addresses participating (and voting yes) on governance proposals than validators addresses, and that average voting power tends to be similar except for some specific proposals that appeared to be more critical for validators, which ended in more voting power being put at stake from them to decide the outcome of that proposals.
+
+This analysis, however, leaves us with the following questions to be answered:
+
+* Which specific issues being discussed generated more participation from both validators and individual users that don't delegate their voting power?
+
+* How many addresses delegate to those validators? This measure can be used to compare with the numbers we saw from individual addresses that don't delegate voting power.
 
 
 ### References
