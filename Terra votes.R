@@ -1,3 +1,6 @@
+#On average, how much voting power (in Luna) was used to vote 'YES' for governance proposals?
+#Out of this, how much Luna comes from validators vs regular wallets?
+
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -34,13 +37,13 @@ data3 <- as_tibble(
 
 data3
 
-#Este gráfico está interesante pero acortaría el rango de la variable para mayor claridad:
 data3 %>% 
   ggplot(aes(x = ID, y = MEAN_VOTING_POWER_YES)) +
-  geom_point(aes(color = VALIDATOR_VS_REGULAR))
+  geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 600000))
 
-#idem
 data3 %>% 
   ggplot(aes(x = ID, y = N)) +
-  geom_point(aes(color = VALIDATOR_VS_REGULAR))
+  geom_point(aes(color = VALIDATOR_VS_REGULAR)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4000))
 
