@@ -5,6 +5,7 @@
 library(httr)
 library(jsonlite)
 library(tidyverse)
+library(lubridate)
 
 #Download data from API (this API is a table queried from Flipside's database: Velocity)
 data <- GET("https://api.flipsidecrypto.com/api/v2/queries/52ba56ce-eaab-4b72-b3e3-3f0673851a1a/data/latest")
@@ -62,6 +63,9 @@ data2 <- rawToChar(data$content)
 data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
 #we could also us 'flatten = FALSE' if we don't want to automatically flatten nested data frames
 
+data3[is.na(data3)] = 0
+data3$DATES <- as_date(data3$DATES)
+
 data3
 
 to.remove <- ls()
@@ -69,8 +73,31 @@ to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
 rm(list=to.remove)
 
 #PARA ANALIZAR:
-#calcular el tamaño de depósito (en USD) diario y agregado por período (last3months vs histórico)
-#calcular el tamaño en cantidad de transacciones (usos que se le da al protocolo e interés en staking)
+#calcular el tamaño de depósito (en USD) diario y agregado por período (last3months vs histórico):
+
+data3 %>%
+  group_by(EVENT_NAME, DATES) %>% 
+  summarise(averageUSD = mean(AMOUNT_USD)) %>% 
+  select(EVENT_NAME, DATES, averageUSD) %>% 
+  ggplot(aes(DATES, averageUSD)) +
+  geom_line(aes(colour = EVENT_NAME)) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")))
+#falta mejorar la estética del gráfico
+
+
+today()
+
+#calcular el tamaño en cantidad de transacciones (usos que se le da al protocolo e interés en staking):
+data3 %>%
+  group_by(EVENT_NAME, DATES) %>% 
+  summarise(n = n()) %>% 
+  select(EVENT_NAME, DATES, n) %>% 
+  ggplot(aes(DATES, n)) +
+  geom_line(aes(colour = EVENT_NAME)) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")))
+
+
 #ver si podemos calcular período de stake (viendo address de envío y destino)
-#calcular inflows vs outflows de cada período
+
+
 
