@@ -72,32 +72,28 @@ to.remove <- ls()
 to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
 rm(list=to.remove)
 
-#PARA ANALIZAR:
-#calcular el tamaño de depósito (en USD) diario y agregado por período (last3months vs histórico):
 
+#Analysis:
+
+#Average daily deposit size in USD:
 data3 %>%
   group_by(EVENT_NAME, DATES) %>% 
   summarise(averageUSD = mean(AMOUNT_USD)) %>% 
   select(EVENT_NAME, DATES, averageUSD) %>% 
   ggplot(aes(DATES, averageUSD)) +
   geom_line(aes(colour = EVENT_NAME)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")))
-#falta mejorar la estética del gráfico
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
+  geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=1000000), colour="black", angle=90) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week")
 
 
-today()
-
-#calcular el tamaño en cantidad de transacciones (usos que se le da al protocolo e interés en staking):
+#Amount of transactions:
 data3 %>%
   group_by(EVENT_NAME, DATES) %>% 
   summarise(n = n()) %>% 
   select(EVENT_NAME, DATES, n) %>% 
   ggplot(aes(DATES, n)) +
   geom_line(aes(colour = EVENT_NAME)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")))
-
-
-#ver si podemos calcular período de stake (viendo address de envío y destino)
-
-
-
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
+  geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=75), colour="black", angle=90) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week")
