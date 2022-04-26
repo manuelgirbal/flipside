@@ -84,7 +84,7 @@ data3 %>%
   geom_line(aes(colour = EVENT_NAME)) +
   geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
   geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=1000000), colour="black", angle=90) +
-  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week")
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y")
 
 
 #Amount of transactions:
@@ -96,4 +96,4 @@ data3 %>%
   geom_line(aes(colour = EVENT_NAME)) +
   geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
   geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=75), colour="black", angle=90) +
-  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week")
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", , date_labels = "%b-%Y")
