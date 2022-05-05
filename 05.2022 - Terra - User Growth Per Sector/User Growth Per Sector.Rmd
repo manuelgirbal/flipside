@@ -1,7 +1,7 @@
 ---
-title: "RocketPool Recent Activity"
+title: "Terra - User Growth Per Sector"
 author: "Manuel Girbal"
-date: "26/4/2022"
+date: "04/05/2022"
 output: html_document
 ---
 
@@ -17,118 +17,67 @@ library(lubridate)
 
 ## Introduction
 
-In this work I'll try to analyze inflows and outflows on RocketPool (a descentralised Ethereum staking protocol) over the past three months. As we near the ETH 2 merge, it is relevant to see if there are any emerging trends. For example: what is the average deposit size and how has that changed vs. the beginning of the protocol? how many staking transactions are being processed? has that number increased recently?
+....
 
 
 ### Methodology
-Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing transaction details for both rETH minting (inflow to the protocol) and rETH burning (outflow) operations:
+Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing ---------------:
 
 ```{sql eval=FALSE}
-with a as 
-  (
-  select date(block_timestamp) as adates,
-         tx_hash as atxhash,
-         event_name
-  from ethereum_core.fact_event_logs
-  where contract_address = '0xae78736cd615f374d3085123a210448e74fc6393' -- rETH contract (RocketPool)
-      and (event_name = 'TokensBurned' or event_name = 'TokensMinted')
-  )
-,
-
-b as 
-  (
-  select date(block_timestamp) as bdates,
-         tx_hash as btxhash,
-         symbol,
-         token_price,
-         amount,
-         amount_usd,
-         from_address,
-         to_address
-  from ethereum_core.ez_token_transfers
-  where symbol = 'rETH'
-  )
-
-select adates as dates,
-       atxhash as tx_hash,
-       event_name,
-       symbol,
-       round(token_price,0) as token_price,
-       round(amount,0) as amount,
-       round(amount_usd,0) as amount_usd,
-       case when dates > CURRENT_DATE()-90 then 'last3months'
-            else 'historical'
-            end as period,
-       from_address,
-       to_address
-from a
-left join b
-on a.atxhash = b.btxhash
+select date(BLOCK_TIMESTAMP) as dates,
+       recipient_label_type,
+       recipient_label_subtype,
+       recipient_label,
+       count(distinct sender) as users
+from terra.transfer_events
+  where recipient_label_type in ('nft', 'dex', 'layer2', 'cex', 'defi', 'dapp')
+group by dates,
+       recipient_label_type,
+       recipient_label_subtype,
+       recipient_label
 ```
 
 ```{r include=FALSE}
-data <- GET("https://api.flipsidecrypto.com/api/v2/queries/52ba56ce-eaab-4b72-b3e3-3f0673851a1a/data/latest")
+data <- GET("https://api.flipsidecrypto.com/api/v2/queries/af747a83-b8c7-43db-9390-d43d759acea4/data/latest")
 str(data)
 data2 <- rawToChar(data$content)
 data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
-data3[is.na(data3)] = 0
 data3$DATES <- as_date(data3$DATES)
+to.remove <- ls()
+to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
+rm(list=to.remove)
 ```
 
 
 ### Analysis
-First we might want to see the daily average amount of rETH tokens (measured in USD value) that are minted and burned, which can give us an idea of how much money is being put in and out of the protocol for staking:
+...............
 
 ```{r echo=FALSE, fig.width = 12}
-#Average daily deposit size in USD:
-data3 %>%
-  group_by(EVENT_NAME, DATES) %>% 
-  summarise(averageUSD = mean(AMOUNT_USD)) %>% 
-  select(EVENT_NAME, DATES, averageUSD) %>% 
-  ggplot(aes(DATES, averageUSD)) +
-  geom_line(aes(colour = EVENT_NAME)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
-  geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=1000000), colour="black", angle=90) +
-  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y")
+
+
+
 ```
 
-Here we can see that, as regards to inflows, a bigger amount of money entered daily at the end of last year, and a bit less nowadays. However, the daily differences tend to be smaller than with outflows, where we can see that there are certain days that present huge outflows of tokens and some others that are somehow quite calm.
 
-It could be interesting to see what kind of events tend to produce bigger and sudden outflows like these observed here.
-
-
-As regards to the amount of daily transactions related to inflows and outflows, a somehow different pattern appears: 
+..........
 
 ```{r echo=FALSE, fig.width = 12}
-data3 %>%
-  group_by(EVENT_NAME, DATES) %>% 
-  summarise(n = n()) %>% 
-  select(EVENT_NAME, DATES, n) %>% 
-  ggplot(aes(DATES, n)) +
-  geom_line(aes(colour = EVENT_NAME)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-01-25")), linetype="dashed", size=1) +
-  geom_text(aes(x= as.Date("2022-01-28"), label="Historical vs past 3 months", y=75), colour="black", angle=90) +
-  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y")
+
+
+
 ```
 
-The amount of daily transactions made is significantly higher for minting operations than for burning operations, although we already saw that the amount in USD value operated tended to be more similar between both kind of operations.
+--------
 
-We can also see an interesting increase in the number of transacions made in the last two months, which can mean that the protocol is starting to be more used than before as we approach the Merge and ETH 2.
+
 
 ### Conclusion
-As the period analized is relatively small, there are no clear conclusions regarding a change in user behavior for the last three months, at least with regard to the amount of money invested. However, we can definitely say that since March of 2022 the amount of daily minting transactions has grew and is constantly higher that the amount of burning transactions (which, however, imply more USD value per transaction)
 
+--
 
-This analysis, however, leaves us with the following question to be answered:
-
-* What kind of events trigger huge daily outflows of USD value or rETH tokens out of the protocol?
 
 ### References
 https://flipsidecrypto.xyz/
-
-https://rocketpool.net/
-
-https://ethereum.org/en/upgrades/merge/
 
 
 Code used for this publication: https://github.com/manuelgirbal/flipside 

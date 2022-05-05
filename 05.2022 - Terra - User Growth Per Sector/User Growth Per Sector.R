@@ -5,6 +5,7 @@
 library(httr)
 library(jsonlite)
 library(tidyverse)
+library(lubridate)
 
 #Download data from API (this API is a table queried from Flipside's database: Velocity)
 data <- GET("https://api.flipsidecrypto.com/api/v2/queries/af747a83-b8c7-43db-9390-d43d759acea4/data/latest")
@@ -34,6 +35,8 @@ data2 <- rawToChar(data$content)
 data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
 #we could also us 'flatten = FALSE' if we don't want to automatically flatten nested data frames
 
+data3$DATES <- as_date(data3$DATES)
+
 data3
 
 to.remove <- ls()
@@ -43,12 +46,56 @@ rm(list=to.remove)
 
 #Analysis:
 
-# --Medir user growth por cantidad de distinct sender address.
-# --Ligar esas wallets receptoras a una app y su sector. Ver cuáles variaron más según la unidad temporal, tal vez en términos porcentuales y luego absolutos
-# --(vemos cuáles traen más users pero también cuáles crecieron internamente)
+data3 %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL_TYPE) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y") +
+  ggtitle("Label type")
+
+
 
 data3 %>% 
-  #tengo que crear 2 variables nuevas: una que sea, si todas las columnas son iguales pero un día posterior, cuántos casos nuevos tengo ese día, y otra en términos porcentuales. O incremento mensual
-  
-  
-  ggplot2(aes())
+  filter(RECIPIENT_LABEL_TYPE != 'dapp') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL_TYPE) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Label type")
+
+
+
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'dapp') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Dapps")
+
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'defi') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Defi")
+
+
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'dex') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Dex")
+
+
+
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'cex') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Cex")
