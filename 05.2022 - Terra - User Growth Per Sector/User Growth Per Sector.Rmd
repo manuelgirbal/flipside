@@ -17,11 +17,12 @@ library(lubridate)
 
 ## Introduction
 
-....
+What sectors / Apps are driving user growth on Terra? 
 
+In this article we'll explore how user growth changed over time in Terra ecosystem, taking into account differences between sectors and the apps or services inside them.
 
 ### Methodology
-Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing ---------------:
+Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing the amount of daily users per label, for the last year:
 
 ```{sql eval=FALSE}
 select date(BLOCK_TIMESTAMP) as dates,
@@ -50,35 +51,97 @@ rm(list=to.remove)
 
 
 ### Analysis
-...............
+So, first of all, which are the main label types we can find on Terra? and which of them represent the biggest amount of users?
 
 ```{r echo=FALSE, fig.width = 12}
-
-
-
+data3 %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL_TYPE) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y") +
+  ggtitle("Label type")
 ```
 
+From this first glimpse, we can see that the Dapp sector used to drive the biggest amount of users, but is now losing terrain against Defi and Dex, which are growing steadily. 
 
-..........
+So, what is contained inside the dapp label?
+
 
 ```{r echo=FALSE, fig.width = 12}
-
-
-
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'dapp') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Dapps")
 ```
 
---------
+It's clear that Chai, the mobile payments app powered by Terra’s blockchain network, was leading inside the label and drived most users at least during 2021.
 
+
+Let's now take a closer look to other labels:
+
+```{r echo=FALSE, fig.width = 12}
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE != 'dapp') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL_TYPE) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Label type")
+```
+
+It might be interesting to take a closer look to what's inside Cex, Dex and Defi sectors, as they're also increasingly bringing more users to Terra:
+
+
+```{r echo=FALSE, fig.width = 12}
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'defi') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Defi")
+```
+
+As regards to Defi, it's clear that Anchor, the lending and borrowing protocol, is still almost single handedly leading growth inside Defi services, but it could be useful to keep an eye on ther protocols like Mirror, Pylon and StarTerra. 
+
+
+```{r echo=FALSE, fig.width = 12}
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'dex') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Dex")
+```
+
+Inside Dexes, it appears that we have an interesting contest between Astroport and Terraswap, so it's definitely worth it to keep looking at these two dexes over time to see what happens with them. 
+
+
+```{r echo=FALSE, fig.width = 12}
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'cex') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Cex")
+```
+
+Finally, in the Cexes terrain Binance is the absolute king, but Kucoin also might deliver more and more users in the future.
 
 
 ### Conclusion
 
---
+From this analysis, we can say that user growth in Terra has been a constant during the last year and a half, and that we have to look specially to what protocols are developed or improved in the Defi and Dex terrain, as both sectors are growing rapidly, and not only drived by one application or protocol, despite having emblems like Anchor and Terraswap. 
 
 
 ### References
 https://flipsidecrypto.xyz/
-
+https://www.terra.money/ 
 
 Code used for this publication: https://github.com/manuelgirbal/flipside 
 

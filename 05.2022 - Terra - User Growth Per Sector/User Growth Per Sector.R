@@ -54,6 +54,16 @@ data3 %>%
   ggtitle("Label type")
 
 
+data3 %>% 
+  filter(RECIPIENT_LABEL_TYPE == 'dapp') %>% 
+  ggplot(aes(x = DATES, y = USERS))+
+  geom_line()+
+  facet_wrap(~RECIPIENT_LABEL) +
+  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
+  ggtitle("Dapps")
+
+
+
 
 data3 %>% 
   filter(RECIPIENT_LABEL_TYPE != 'dapp') %>% 
@@ -65,13 +75,7 @@ data3 %>%
 
 
 
-data3 %>% 
-  filter(RECIPIENT_LABEL_TYPE == 'dapp') %>% 
-  ggplot(aes(x = DATES, y = USERS))+
-  geom_line()+
-  facet_wrap(~RECIPIENT_LABEL) +
-  scale_x_date(date_breaks = "6 month", date_labels = "%b-%Y")+
-  ggtitle("Dapps")
+
 
 data3 %>% 
   filter(RECIPIENT_LABEL_TYPE == 'defi') %>% 
