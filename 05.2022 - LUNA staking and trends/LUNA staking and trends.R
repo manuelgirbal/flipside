@@ -5,6 +5,7 @@ library(jsonlite)
 library(tidyverse)
 library(lubridate)
 library(scales)
+library(plotly)
 
 #Download data from API (this API is a table queried from Flipside's database: Velocity)
 data <- GET("https://api.flipsidecrypto.com/api/v2/queries/728f6c73-fbbe-4656-a66b-18c45a2a8058/data/latest")
@@ -76,4 +77,10 @@ data3 %>%
   scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
   scale_y_continuous(name = "% of LUNA Staked", labels = comma, limits = c(40,80)) +
   ggtitle("LUNA staked as % of total circulating supply")
-  
+
+
+
+#TEST:
+
+plot_ly(data3, x = ~DATES, y = ~STAKED, type = 'scatter', mode = 'lines')
+

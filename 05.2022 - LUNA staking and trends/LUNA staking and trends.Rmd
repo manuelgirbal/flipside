@@ -43,17 +43,33 @@ Column {data-width=300}
 ### Chart A
 
 ```{r}
-renderPlot({
-  data3 %>% 
-  filter(DATES < "2022-04-30") %>% 
-  ggplot(aes(DATES)) +
-  geom_line(aes(y = STAKED, colour = "Staked"), size=1) + 
-  geom_line(aes(y = LIQUID, colour = "Liquid"), size=1) +
-  theme_minimal() +
-  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
-  scale_y_continuous(name = "LUNA Circulating Supply", labels = comma) +
-  ggtitle("Staked & Liquid LUNA over time")
+renderPlotly({
+   plot_ly(data3,
+              x = ~DATES,
+              y = ~STAKED,
+              colors = "Paired",
+              mode = "lines")
 })
+
+
+
+# fig <- plot_ly(data, x = ~x, y = ~trace_0, name = 'trace 0', type = 'scatter', mode = 'lines') 
+# fig <- fig %>% add_trace(y = ~trace_1, name = 'trace 1', mode = 'lines+markers') 
+# fig <- fig %>% add_trace(y = ~trace_2, name = 'trace 2', mode = 'markers')
+
+
+
+# renderPlot({
+#   data3 %>% 
+#   filter(DATES < "2022-04-30") %>% 
+#   ggplot(aes(DATES)) +
+#   geom_line(aes(y = STAKED, colour = "Staked"), size=1) + 
+#   geom_line(aes(y = LIQUID, colour = "Liquid"), size=1) +
+#   theme_minimal() +
+#   scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y") +
+#   scale_y_continuous(name = "LUNA Circulating Supply", labels = comma) +
+#   ggtitle("Staked & Liquid LUNA over time")
+# })
 ```
 
 ### Chart B
