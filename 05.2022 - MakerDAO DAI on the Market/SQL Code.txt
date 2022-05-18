@@ -1,0 +1,33 @@
+with DAI_transactions as
+ (
+    select date(block_timestamp) as dates,
+           to_address,
+           sum(amount) as volume
+    from flipside_prod_db.ethereum_core.ez_token_transfers 
+    where contract_address = lower('0x6B175474E89094C44Da98b954EedeAC495271d0F') and dates > getdate() - interval'365 days'
+    group by dates, to_address
+ )
+,
+
+address_labels as 
+  (
+    select address,
+           label_type as label
+    from flipside_prod_db.ethereum_core.dim_labels
+  )
+,
+
+final as 
+  (
+select *
+from DAI_transactions
+left join address_labels
+on DAI_transactions.to_address = address_labels.address
+  )
+
+
+select dates,
+       label,
+       round(sum(volume),0) as DAIvolume
+from final
+group by dates, label

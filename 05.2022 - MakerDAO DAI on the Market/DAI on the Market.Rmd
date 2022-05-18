@@ -1,0 +1,145 @@
+---
+title: "DAI on the Market"
+author: "Manuel Girbal"
+date: "18/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+
+```
+
+## Introduction
+
+In this work
+
+
+### Methodology
+Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing transaction details ----------------------:
+
+```{sql eval=FALSE}
+with DAI_transactions as
+ (
+    select date(block_timestamp) as dates,
+           to_address,
+           sum(amount) as volume
+    from flipside_prod_db.ethereum_core.ez_token_transfers 
+    where contract_address = lower('0x6B175474E89094C44Da98b954EedeAC495271d0F') and dates > getdate() - interval'365 days'
+    group by dates, to_address
+ )
+,
+
+address_labels as 
+  (
+    select address,
+           label_type as label
+    from flipside_prod_db.ethereum_core.dim_labels
+  )
+,
+
+final as 
+  (
+select *
+from DAI_transactions
+left join address_labels
+on DAI_transactions.to_address = address_labels.address
+  )
+
+
+select dates,
+       label,
+       round(sum(volume),0) as DAIvolume
+from final
+group by dates, label
+```
+
+```{r include=FALSE}
+#Disabling scientific notation:
+options(scipen=999)
+
+#Download data from API (this API is a table queried from Flipside's database: Velocity)
+data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/4949a932-a735-4f3b-bf4c-5bb2959b1121/data/latest")
+
+#Lets take a look and see which part of this data we need to get:
+str(data) #we're going for $content, which is our raw data
+
+#We then need to convert the raw Unicode into a character vector:
+data2 <- rawToChar(data$content)
+
+#Finally, we convert the json data of interest into a table:
+data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
+#we could also us 'flatten = FALSE' if we don't want to automatically flatten nested data frames
+
+data3[is.na(data3)] = 0
+data3$DATES <- as_date(data3$DATES)
+
+data3
+
+to.remove <- ls()
+to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
+rm(list=to.remove)
+
+
+#ETH and BTC daily price (from https://coinmarketcap.com/):
+btcprice <- read.csv("05.2022 - MakerDAO DAI on the Market/btc-usd-max.csv")
+ethprice <- read.csv("05.2022 - MakerDAO DAI on the Market/eth-usd-max.csv")
+
+btcprice <- as_tibble(btcprice) %>%
+  mutate(DATES = as_date(snapped_at)) %>% 
+  group_by(DATES) %>% 
+  mutate(btcprice = round(mean(price),0)) %>% 
+  select(DATES, btcprice)
+
+ethprice <- as_tibble(ethprice) %>%
+  mutate(DATES = as_date(snapped_at)) %>% 
+  group_by(DATES) %>% 
+  mutate(ethprice = round(mean(price),0)) %>% 
+  select(DATES, ethprice)            
+
+
+#Merging tables (baseline: first day of the last year period):
+data <- data3 %>% 
+  group_by(DATES) %>% 
+  summarise(DAIVOL = sum(DAIVOLUME)) %>% 
+  left_join(btcprice, by = "DATES") %>% 
+  left_join(ethprice, by = "DATES")
+
+
+#Data with variation:
+data_variation <- data %>%
+  arrange(DATES) %>% 
+  mutate(DAI_VOL_VAR = round((DAIVOL/lag(DAIVOL)-1)*100,1),
+         BTC_VAR = round((btcprice /lag(btcprice )-1)*100,1),
+         ETH_VAR = round((ethprice /lag(ethprice )-1)*100,1))
+
+data_variation[is.na(data_variation)] <- 0
+```
+
+
+### Analysis
+....................
+
+
+```{r echo=FALSE, fig.width = 12}
+
+```
+
+
+
+
+### References
+https://flipsidecrypto.xyz/
+
+https://etherscan.io/
+
+https://coinmarketcap.com/
+
+
+Code used for this publication: https://github.com/manuelgirbal/flipside 
+

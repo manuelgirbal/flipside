@@ -1,0 +1,1 @@
+https://node-api.flipsidecrypto.com/api/v2/queries/4949a932-a735-4f3b-bf4c-5bb2959b1121/data/latest
