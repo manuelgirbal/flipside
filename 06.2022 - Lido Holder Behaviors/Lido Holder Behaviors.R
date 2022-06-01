@@ -74,7 +74,7 @@ data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
 
 data3$DATE <- as_date(data3$DATE)
 
-# Obtained Top 10 hodlers with transactions (May 2022 month average), just LDO on Ethereum (not Solana, etc.)
+# Obtained Top 10 hodlers with transactions (balance from May 2022 month average), just LDO on Ethereum (not Solana, etc.)
 
 # Getting top 5 (excluding Treasury)
 top5 <- as_vector(
@@ -89,6 +89,9 @@ top5 <- as_vector(
 data4 <- data3 %>% 
   filter(USER_ADDRESS %in% top5)
 
+# data4$USER_ADDRESS <- abbreviate(data4$USER_ADDRESS, use.classes = FALSE, minlength = 10, strict = TRUE, named = TRUE)
+# data4
+
 to.remove <- ls()
 to.remove <- c(to.remove[!grepl("data4", to.remove)], "to.remove")
 rm(list=to.remove)
@@ -100,15 +103,24 @@ balances <- data4 %>% distinct(USER_ADDRESS, LDO)
 
 plot_ly(balances, x = ~USER_ADDRESS, y = ~LDO, type = 'bar') %>%
   layout(title = "",
-         yaxis = list(title = "May LDO Balance" ,
-                      zeroline = FALSE))
+         yaxis = list(title = "May 2022 LDO Balance" ,
+                      zeroline = FALSE),
+         xaxis = list(tickangle = 25))
         )
 
 #History
-
+history <- data4 %>%
+  select(USER_ADDRESS, FIRST_DATE = DATE) %>% 
+  group_by(USER_ADDRESS) %>% 
+  arrange(FIRST_DATE) %>%
+  slice(1L)
+  
 
 # Typical actions with LDO
-
+actions <- data4 %>%
+  group_by(USER_ADDRESS) %>%
+  summarise(transactions = n(),
+         amount = sum(AMOUNT))
 
 
 #References:
