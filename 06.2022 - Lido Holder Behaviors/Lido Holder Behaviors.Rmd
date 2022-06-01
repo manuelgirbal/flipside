@@ -4,8 +4,13 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
+    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Lido%20Holder%20Behaviors
 runtime: shiny
 ---
+<style>
+body {
+text-align: justify}
+</style>
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
@@ -16,6 +21,7 @@ library(lubridate)
 library(shiny)
 library(plotly)
 library(DT)
+library(rsconnect)
 ```
 
 ```{r data, include=FALSE}
@@ -48,32 +54,46 @@ history <- data4 %>%
   
 actions <- data4 %>%
   group_by(USER_ADDRESS) %>%
-  summarise(transactions = n(),
+  summarise(transactions = n()-1,
          amount = sum(AMOUNT))
 ```
 
 
+Page 1
+=========================
+
+Column {data-width=600}
+-----------------------
+
+### Description & Analysis
+
+Lido is a liquid staking solution for ETH 2.0. Its token LDO is an Ethereum token granting governance rights in the Lido DAO, which governs a set of liquid staking protocols. By holding it, one is granted voting rights and proportional decision-making.
+
+Exploring the behavior of top 5 LDO holders (excluding Treasury), and analyzing their transaction history, we can get a sense of how important is holding LDO for this accounts. 
+
+As we can see on the History table, only two the these accounts made a transaction with some of their LDO, dating back to 2021-01-05 on one case and 2022-01-20 on the other. Moreover, if we take a look into their typical Actions, this last account made just one transaction for 1000000 LDO, while the other registered more activity with 80 transactions for a total of 20487416 LDO.
+
+Average May-2022 balances can be seen on the plot on the bar chart.
+
+As a concluding remark, it appears that holding LDO and keeping governance rights has a lot of value for top LDO holders, despite whatever price fluctuation it might have. 
+
+
+<u>References:
+
+https://flipsidecrypto.xyz/
+
+https://stake.lido.fi/
+
+https://etherscan.io/token/0x5a98fcbea516cf06857215779fd812ca3bef1b32
+
+
+
+Page 2
+==============================
+
 Column {data-width=200}
------------------------------------------------------------------------
+-----------------------
 
-### Description
-
-Descripción del tablero... este texto puede ir arriba de los cuadros, ocupando el ancho de todo el tablero sin pertenecer a ninguna columna.
-
-
-### History
-
-```{r}
-renderDT({
-  datatable(history,
-    rownames = FALSE, options = list(pageLength = 5)
-  )
-})
-```
-
-
-Column {data-width=200}
------------------------------------------------------------------------
 ### Balances
 
 ```{r}
@@ -83,6 +103,21 @@ plot_ly(balances, x = ~USER_ADDRESS, y = ~LDO, type = 'bar') %>%
          yaxis = list(title = "May 2022 LDO Balance" ,
                       zeroline = FALSE),
          xaxis = list(showticklabels = FALSE))
+})
+```
+
+
+
+Column {data-width=200}
+-----------------------
+
+### History
+
+```{r}
+renderDT({
+  datatable(history,
+    rownames = FALSE, options = list(pageLength = 5)
+  )
 })
 ```
 
