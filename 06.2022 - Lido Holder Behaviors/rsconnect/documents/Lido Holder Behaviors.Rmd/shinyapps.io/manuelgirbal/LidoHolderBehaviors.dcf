@@ -5,9 +5,9 @@ account: manuelgirbal
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6414741
-bundleId: 5969518
+bundleId: 5973068
 url: https://manuelgirbal.shinyapps.io/LidoHolderBehaviors/
-when: 1654123620.05354
-lastSyncTime: 1654123620.05354
+when: 1654209483.03357
+lastSyncTime: 1654209483.03357
 asMultiple: FALSE
 asStatic: FALSE
