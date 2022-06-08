@@ -1,0 +1,13 @@
+name: Solana_Outages
+title: Solana_Outages
+username:
+account: manuelgirbal
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6456042
+bundleId: 5990734
+url: https://manuelgirbal.shinyapps.io/Solana_Outages/
+when: 1654725762.55628
+lastSyncTime: 1654725762.55628
+asMultiple: FALSE
+asStatic: FALSE

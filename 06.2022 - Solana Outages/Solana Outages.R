@@ -34,6 +34,30 @@ to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
 rm(list=to.remove)
 
 
+data4 <- data3 %>%
+  select(dates = DATE1,
+         SOL_PRICE,
+         TRANSACTIONS,
+         amount_converted_stable = AMOUNT_CONVERTED,
+         swaps_stable = SWAPS_TO_STABLECOIN,
+         LABEL_TYPE,
+         counts = 'COUNT(*)'
+         )
+ 
+data4 <- data4 %>%
+  pivot_wider(names_from = LABEL_TYPE, values_from = counts)
+
+
+data4[is.na(data4)] <- 0
+  
+
+
+
+
+
+
+
+
 #Separate dataframes:
 price <- data3 %>% 
   group_by(DATE1) %>% 

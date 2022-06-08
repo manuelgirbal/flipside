@@ -41,13 +41,12 @@
     # (
     #   select block_timestamp::date as date4,
     #   label_type,
-    #   label_subtype,
     #   count(*)
     #   from flipside_prod_db.solana.fact_transfers
     #   left join flipside_prod_db.solana.dim_labels
     #   on flipside_prod_db.solana.fact_transfers.tx_to = flipside_prod_db.solana.dim_labels.address
     #   where date4 >= '2022-04-01'
-    #   group by 1, 2, 3
+    #   group by 1, 2
     # )
     # 
     # select *

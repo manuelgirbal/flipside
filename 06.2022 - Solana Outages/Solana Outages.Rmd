@@ -3,7 +3,7 @@ title: "Solana Outages"
 output: 
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
-    source_code: 
+    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Solana%20Outages
 runtime: shiny
 ---
 <style>
@@ -25,102 +25,79 @@ library(rsconnect)
 
 ```{r data, include=FALSE}
 options(scipen=999)
-data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/dab8099e-ef74-44df-be87-6483ba07fe32/data/latest")
-str(data)
+
+data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/17b75965-83c6-4994-89f4-002dc05326bb/data/latest")
+
+str(data) 
+
 data2 <- rawToChar(data$content)
+
 data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
-data3$DATE <- as_date(data3$DATE)
 
-top5 <- as_vector(
-  data3 %>%
-  filter(!LABEL_SUBTYPE %in% 'treasury') %>%
-  distinct(USER_ADDRESS, LDO) %>%
-  arrange(desc(LDO)) %>%
-  head(5) %>%
-  select(USER_ADDRESS)
-  )
+data3$DATE1 <- as_date(data3$DATE1)
 
-data4 <- data3 %>% 
-  filter(USER_ADDRESS %in% top5)
+data4 <- data3 %>%
+  select(dates = DATE1,
+         SOL_PRICE,
+         TRANSACTIONS,
+         amount_converted_stable = AMOUNT_CONVERTED,
+         swaps_stable = SWAPS_TO_STABLECOIN,
+         LABEL_TYPE,
+         counts = 'COUNT(*)'
+         )
+ 
+data4 <- data4 %>%
+  pivot_wider(names_from = LABEL_TYPE, values_from = counts)
 
-balances <- data4 %>% distinct(USER_ADDRESS, LDO)
 
-history <- data4 %>%
-  select(USER_ADDRESS, FIRST_DATE = DATE) %>% 
-  group_by(USER_ADDRESS) %>% 
-  arrange(FIRST_DATE) %>%
-  slice(1L)
-  
-actions <- data4 %>%
-  group_by(USER_ADDRESS) %>%
-  summarise(transactions = n()-1,
-         amount = sum(AMOUNT))
+data4[is.na(data4)] <- 0
+
+Variables = c("SOL_PRICE", "TRANSACTIONS", "amount_converted_stable", "swaps_stable", "cex", "nft")
 ```
 
 
-### Introduction
+Column {.sidebar data-width=200}
+-----------------------------------------------------------------------
+```{r}
+selectInput("Variable", label = "Select variable:", choices = Variables)
 
-Lido is a liquid staking solution for ETH 2.0. Its token LDO is an Ethereum token granting governance rights in the Lido DAO, which governs a set of liquid staking protocols. By holding it, one is granted voting rights and proportional decision-making.
-
-Exploring the behavior of top 5 LDO holders (excluding Treasury), and analyzing their transaction history, we can get a sense of how important is holding LDO for this accounts. 
+```
 
 
-### History
+Column {data-width=400}
+-----------------------------------------------------------------------
+### Introduction & analysis
 
-As we can see on the History table, only two the these accounts made a transaction with some of their LDO, dating back to 2021-01-05 on one case and 2022-01-20 on the other:
+Solana experienced outages on 5/1 and 6/1, where validators were forced to restart the network. After the restart happens during these outages, how do users on the network generally respond?
 
+As can be seen in the chart below (and using the left selection panel), these outages don't appear to have a direct effect on some variables of interest, namely: the price of SOL (SOL_PRICE), the amount of daily transactions (TRANSACTIONS), the amount of USD value converted to stablecoins (amount_converted_stable), the amounts of swaps to stablecoins performed (swaps_stable), the amount of transactions directed to centralized exchanges (cex), and the amount of transactions directed to NFT minting contracts (nft).
+
+However, on chain data analysis of these variables doesn't allow us to infer the same for every variable. Following these events users don't change their behavior related to holding SOL (its price doesn't respond to these events), stablecoin related activity (users don't convert SOL or other tokens in fear of losing value) and NFT activity. 
+
+On the other hand, it appears that these outages do have some incidence on the amount of transactions performed the following days (which grows up), many of which are transfers to centralized exchanges. What one may think about this is that outages produce a big amount of fear on Solana users, which motivates them to move their savings or assets offchain and into a trusted third parties that don't suffer from blakouts.
+
+
+### Data
 
 ```{r}
-renderDT({
-  datatable(history,
-    rownames = FALSE, options = list(pageLength = 5)
-  )
+renderPlot({
+data4 %>%
+  ggplot(aes(dates, data4[[input$Variable]])) +
+  geom_line(size=1) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-05-01")), linetype="dashed", size=1) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-06-01")), linetype="dashed", size=1) +
+  scale_x_date(date_breaks = "1 week", date_minor_breaks = "1 week", date_labels = "%d-%b-%Y") +
+  xlab("dates") +
+  ylab("")
 })
 ```
-
-
-### Actions
-
-Moreover, if we take a look into their typical Actions, this last account made just one transaction for 1000000 LDO, while the other registered more activity with 80 transactions for a total of 20487416 LDO:
-
-
-```{r}
-renderDT({
-  datatable(actions,
-    rownames = FALSE, options = list(pageLength = 5)
-  )
-})
-```
-
-
-### Balances
-
-Average May-2022 balances can be seen on this bar chart:
-
-
-```{r}
-renderPlotly({
-plot_ly(balances, x = ~USER_ADDRESS, y = ~LDO, type = 'bar') %>%
-  layout(title = "",
-         yaxis = list(title = "May 2022 LDO Balance" ,
-                      zeroline = FALSE),
-         xaxis = list(showticklabels = FALSE))
-})
-```
-
-
-### Conclusion
-
-As a concluding remark, it appears that holding LDO and keeping governance rights has a lot of value for top LDO holders, despite whatever price fluctuation it might have. 
 
 
 ### References
 
 https://flipsidecrypto.xyz/
 
-https://stake.lido.fi/
-
-https://etherscan.io/token/0x5a98fcbea516cf06857215779fd812ca3bef1b32
+https://explorer.solana.com/
 
 
 
