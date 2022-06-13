@@ -1,7 +1,3 @@
-#Identify accounts that have staked ETH with Lido when the price of ETH was much higher or much lower than it is now. 
-#Have they held or sold their stETH?
-
-
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -28,24 +24,52 @@ data3$DATE <- as_date(data3$DATE)
 
 data3 <- data3 %>% 
   arrange(DATE) %>% 
-  filter(!is.na(USER_ADDRESS))
+  mutate_if(is.numeric, round, digits=2)
+
+data3$BALANCE[is.na(data3$BALANCE)] <- 0 
+data3$AMOUNT_USD2[is.na(data3$AMOUNT_USD2)] <- 0 
 
 to.remove <- ls()
 to.remove <- c(to.remove[!grepl("data3", to.remove)], "to.remove")
 rm(list=to.remove)
 
-#Notes about the dataset:
-  # We got a dataset of all addresses that staked ETH someday (more than 1k usd) and still have a stETH balance.
-  # We won't see how well did those that sold all their stETH but we can yet see those who still have some stETH related to its present value.
+data4 <- data3 %>% 
+  group_by(ORIGIN_FROM_ADDRESS) %>% 
+  summarize(amount_stETHinvested = sum(AMOUNT),
+            amount_USDinvested = sum(AMOUNT_USD),
+            amount_stETHheld = sum(BALANCE),
+            amount_USDheld = sum(AMOUNT_USD2)) %>% 
+  mutate(type = case_when(
+           (amount_stETHinvested <= amount_stETHheld) == TRUE ~ "HODL", #HODL or got more from secondary markets, but not less
+           (amount_USDheld == "0") == TRUE ~ "SOLD",
+           TRUE ~ "sold_some"),
+         current_balance = (amount_USDheld - amount_USDinvested))
+
+HODL <- data4 %>% 
+  filter(type == "HODL",
+         current_balance < 500000000) #excluding some outliers
+#For those who account more than they staked (aquired from secondary markets) we don't really know how much they invested
 
 
-#Analysis:
+sold_some <- data4 %>% 
+  filter(type == "sold_some")
+
+SOLD <- data4 %>% 
+  filter(type == "SOLD")
 
 
+##Analysis:
+data4
 
+#Summary:
+data4 %>% 
+  group_by(type) %>% 
+  summarize(n = n())
 
-#References:
-  # https://etherscan.io/token/0xae7ab96520de3a18e5e111b5eaab095312d7fe84
-  # https://stake.lido.fi/
-  # https://flipsidecrypto.xyz/
-  # https://coinmarketcap.com/
+#Hodlers:
+
+plot_ly(x = ~HODL$current_balance, 
+        type = "histogram") %>% 
+        layout(bargap=0.1,
+               xaxis = list(title = 'Current USD Balance'))
+

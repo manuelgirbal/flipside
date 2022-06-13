@@ -1,9 +1,9 @@
 ---
-title: "Lido Holder Behaviors"
+title: "Lido HODL or Sell?"
 output: 
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
-    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Lido%20Holder%20Behaviors
+    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Lido%20HOLD%20or%20Sell
 runtime: shiny
 ---
 <style>
@@ -24,50 +24,23 @@ library(rsconnect)
 ```
 
 ```{r data, include=FALSE}
-options(scipen=999)
-data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/dab8099e-ef74-44df-be87-6483ba07fe32/data/latest")
-str(data)
-data2 <- rawToChar(data$content)
-data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
-data3$DATE <- as_date(data3$DATE)
 
-top5 <- as_vector(
-  data3 %>%
-  filter(!LABEL_SUBTYPE %in% 'treasury') %>%
-  distinct(USER_ADDRESS, LDO) %>%
-  arrange(desc(LDO)) %>%
-  head(5) %>%
-  select(USER_ADDRESS)
-  )
 
-data4 <- data3 %>% 
-  filter(USER_ADDRESS %in% top5)
-
-balances <- data4 %>% distinct(USER_ADDRESS, LDO)
-
-history <- data4 %>%
-  select(USER_ADDRESS, FIRST_DATE = DATE) %>% 
-  group_by(USER_ADDRESS) %>% 
-  arrange(FIRST_DATE) %>%
-  slice(1L)
-  
-actions <- data4 %>%
-  group_by(USER_ADDRESS) %>%
-  summarise(transactions = n()-1,
-         amount = sum(AMOUNT))
 ```
 
 
 ### Introduction
 
-Lido is a liquid staking solution for ETH 2.0. Its token LDO is an Ethereum token granting governance rights in the Lido DAO, which governs a set of liquid staking protocols. By holding it, one is granted voting rights and proportional decision-making.
+Identify accounts that have staked ETH with Lido when the price of ETH was much higher or much lower than it is now. 
+Have they held or sold their stETH?
 
-Exploring the behavior of top 5 LDO holders (excluding Treasury), and analyzing their transaction history, we can get a sense of how important is holding LDO for this accounts. 
 
+### a
 
-### History
-
-As we can see on the History table, only two the these accounts made a transaction with some of their LDO, dating back to 2021-01-05 on one case and 2022-01-20 on the other:
+Date of current balance: 2022-06-11
+We got a dataset of all addresses that staked ETH someday (more than 1k usd).
+We won't see how well did those that sold all their stETH (we didn't get date of sell) but we can yet see those who still have some stETH.
+We'll also see how well or bad are doing those who didn't sell.
 
 
 ```{r}
@@ -79,9 +52,9 @@ renderDT({
 ```
 
 
-### Actions
+### a
 
-Moreover, if we take a look into their typical Actions, this last account made just one transaction for 1000000 LDO, while the other registered more activity with 80 transactions for a total of 20487416 LDO:
+a
 
 
 ```{r}
@@ -93,9 +66,9 @@ renderDT({
 ```
 
 
-### Balances
+### a
 
-Average May-2022 balances can be seen on this bar chart:
+a
 
 
 ```{r}
@@ -111,22 +84,13 @@ plot_ly(balances, x = ~USER_ADDRESS, y = ~LDO, type = 'bar') %>%
 
 ### Conclusion
 
-As a concluding remark, it appears that holding LDO and keeping governance rights has a lot of value for top LDO holders, despite whatever price fluctuation it might have. 
+a 
 
 
 ### References
 
-https://flipsidecrypto.xyz/
+https://etherscan.io/token/0xae7ab96520de3a18e5e111b5eaab095312d7fe84
 
 https://stake.lido.fi/
 
-https://etherscan.io/token/0x5a98fcbea516cf06857215779fd812ca3bef1b32
-
-
-
-
-
-
-
-
-
+https://flipsidecrypto.xyz/
