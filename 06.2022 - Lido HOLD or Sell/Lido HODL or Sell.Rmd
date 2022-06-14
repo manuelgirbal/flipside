@@ -24,60 +24,108 @@ library(rsconnect)
 ```
 
 ```{r data, include=FALSE}
+options(scipen=999)
 
+data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/f9b75a25-85ff-419c-b363-5f5929a4062a/data/latest")
 
+str(data) 
+
+data2 <- rawToChar(data$content)
+
+data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
+
+data3$DATE <- as_date(data3$DATE)
+
+data3 <- data3 %>% 
+  arrange(DATE) %>% 
+  mutate_if(is.numeric, round, digits=2)
+
+data3$BALANCE[is.na(data3$BALANCE)] <- 0 
+data3$AMOUNT_USD2[is.na(data3$AMOUNT_USD2)] <- 0 
+
+data4 <- data3 %>% 
+  group_by(ORIGIN_FROM_ADDRESS) %>% 
+  summarize(amount_stETHinvested = sum(AMOUNT),
+            amount_USDinvested = sum(AMOUNT_USD),
+            amount_stETHheld = sum(BALANCE),
+            amount_USDheld = sum(AMOUNT_USD2)) %>% 
+  mutate(type = case_when(
+           (amount_stETHinvested <= amount_stETHheld) == TRUE ~ "HODL",
+           (amount_USDheld == "0") == TRUE ~ "SOLD",
+           TRUE ~ "sold_some"),
+         current_balance = (amount_USDheld - amount_USDinvested))
+
+HODL <- data4 %>% 
+  filter(type == "HODL",
+         current_balance < 500000000) 
+
+sold_some <- data4 %>% 
+  filter(type == "sold_some")
+
+SOLD <- data4 %>% 
+  filter(type == "SOLD")
 ```
 
 
 ### Introduction
 
-Identify accounts that have staked ETH with Lido when the price of ETH was much higher or much lower than it is now. 
-Have they held or sold their stETH?
+This work tries to identify accounts that have staked ETH with Lido, and will try to see if they held the amount of stETH received when staking, and how good is that investment looking now. 
+
+stETH is a token that represents staked ether in Lido, combining the value of initial deposit + staking rewards. This token cannot yet be redeemed for the ETH staked, but can be sold in secondary markets, and despite being pegged to ETH, sometimes its price can depeg from it.
 
 
-### a
+### Methodology
 
-Date of current balance: 2022-06-11
-We got a dataset of all addresses that staked ETH someday (more than 1k usd).
-We won't see how well did those that sold all their stETH (we didn't get date of sell) but we can yet see those who still have some stETH.
-We'll also see how well or bad are doing those who didn't sell.
+Querying the data from Flipside Crypto, we'll work with a dataset that contains the ETH addresses that have staked ETH on Lido's stETH contract, but for this work we'll only consider deposits of ETH that were at that monent equal or more than USD 1000. 
+
+Dataset also contains the amount of ETH invested and its value in USD, and also the amount of stETH held on 2022-06-11 and its value in USD.
+
+Finally, accounts were classified in three types:
+
+1) Those who held their stETH, or that have a bigger current balance (this could happen if they got more stETH on secondary markets or even by earning staking returns).
+
+2) Those who sold or their stETH and have a current balance of 0.
+
+3) Those who sold some of their stETH but not all, and now have less stETH compared to what they had when staking ETH.
+
+Given the characteristics of our data, we won't be able to see how well did those that sold all or some of their stETH, as we would have to get the selling date to calculate the price of ETH and stETH at that moment.
+
+We'll mainly focus on how well or bad are doing those who didn't sell:
+
 
 
 ```{r}
 renderDT({
-  datatable(history,
-    rownames = FALSE, options = list(pageLength = 5)
-  )
+  datatable(data4,
+    rownames = FALSE,
+    options = list(pageLength = 5)
+    )
 })
 ```
 
 
-### a
+### Analysis
 
-a
-
+excluding some outliers
+For those who account more than they staked (aquired from secondary markets) we don't really know how much they invested but we are understimating their losses
 
 ```{r}
 renderDT({
-  datatable(actions,
-    rownames = FALSE, options = list(pageLength = 5)
-  )
+  datatable(data4 %>% group_by(type) %>% summarize(n = n()),
+    rownames = FALSE,
+    options = list(pageLength = 5)
+    )
 })
 ```
 
-
-### a
-
-a
-
+### Hodlers current stETH balance in USD value:
 
 ```{r}
 renderPlotly({
-plot_ly(balances, x = ~USER_ADDRESS, y = ~LDO, type = 'bar') %>%
-  layout(title = "",
-         yaxis = list(title = "May 2022 LDO Balance" ,
-                      zeroline = FALSE),
-         xaxis = list(showticklabels = FALSE))
+plot_ly(x = ~HODL$current_balance, 
+        type = "histogram") %>% 
+        layout(bargap=0.1,
+               xaxis = list(title = 'Current USD Balance'))
 })
 ```
 
