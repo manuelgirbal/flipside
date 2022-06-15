@@ -74,9 +74,9 @@ This work tries to identify accounts that have staked ETH with Lido, and will tr
 stETH is a token that represents staked ether in Lido, combining the value of initial deposit + staking rewards. This token cannot yet be redeemed for the ETH staked, but can be sold in secondary markets, and despite being pegged to ETH, sometimes its price can depeg from it.
 
 
-### Methodology
+### Data
 
-Querying the data from Flipside Crypto, we'll work with a dataset that contains the ETH addresses that have staked ETH on Lido's stETH contract, but for this work we'll only consider deposits of ETH that were at that monent equal or more than USD 1000. 
+Querying the data from Flipside Crypto, we'll work with a dataset of 569 rows that contains the ETH addresses that have staked ETH on Lido's stETH contract, but for this work we'll only consider deposits of ETH that were at that moment equal or more than USD 1000. 
 
 Dataset also contains the amount of ETH invested and its value in USD, and also the amount of stETH held on 2022-06-11 and its value in USD.
 
@@ -90,49 +90,59 @@ Finally, accounts were classified in three types:
 
 Given the characteristics of our data, we won't be able to see how well did those that sold all or some of their stETH, as we would have to get the selling date to calculate the price of ETH and stETH at that moment.
 
-We'll mainly focus on how well or bad are doing those who didn't sell:
+We'll mainly focus on how well or bad are doing those who didn't sell.
 
 
+### Main dataset
 
 ```{r}
 renderDT({
-  datatable(data4,
+  datatable(data4 %>% select(!type),
     rownames = FALSE,
-    options = list(pageLength = 5)
-    )
+    options = list(pageLength = 5,
+                   columnDefs = list(list(className = 'dt-center', 
+                                     targets = "_all"))))
+})
+```
+
+
+### Type classification
+
+As we can see, most of the 569 accounts analyzed (402) have sold their stETH and a smaller amount (87) have at least sold some. Only 80 accounts have retained the stETH obtained when staking ETH and some of them might also have bought more:
+
+```{r}
+renderDT({
+  datatable(data4 %>% group_by(type) %>% summarize(n = n()),
+    options = list(columnDefs = 
+                           list(list(className = 'dt-center', 
+                                     targets = "_all"))))
 })
 ```
 
 
 ### Analysis
 
-excluding some outliers
-For those who account more than they staked (aquired from secondary markets) we don't really know how much they invested but we are understimating their losses
-
-```{r}
-renderDT({
-  datatable(data4 %>% group_by(type) %>% summarize(n = n()),
-    rownames = FALSE,
-    options = list(pageLength = 5)
-    )
-})
-```
+Excluding some outliers, if we take a look at the current balances (measured in USD) of these 80 hodlers accounts, we can clearly see that holding stETH hasn't been a great strategy if they tried to sell it now, as they wouldn't recover their investment. We have to take into account also that we're underestimating the amount initially invested by some of these addresses, as some of them account for more stETH than the amount they minted while staking ETH:
 
 ### Hodlers current stETH balance in USD value:
 
-```{r}
+```{r, fig.height= 4}
 renderPlotly({
 plot_ly(x = ~HODL$current_balance, 
         type = "histogram") %>% 
         layout(bargap=0.1,
-               xaxis = list(title = 'Current USD Balance'))
+               xaxis = list(title = 'Current USD Balance'),
+               autosize = F, 
+               width = 1000, 
+               height = 300
+               )
 })
 ```
 
 
 ### Conclusion
 
-a 
+From data at hand and the tables and plot provided, we can conclude that holding stETH hasn't been the best alternative for hodlers, at least to the date this is written (June 2022). However, one can also consider the fact that, if this accounts plan to hodl until the Ethereum Merge, short term balances aren't of much importance for this people, and they can earn staking rewards and maybe buy more stETH (as they would do with standard ETH) and hodl for the long term.
 
 
 ### References
