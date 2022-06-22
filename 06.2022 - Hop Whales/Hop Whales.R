@@ -23,18 +23,31 @@ data3_L2 <- as_tibble(fromJSON(data2_L2, flatten = TRUE))
 data3_Hop$DATE <- as_date(data3_Hop$DATE)
 data3_L2$DATE <- as_date(data3_L2$DATE)
 
-data <- data3_Hop %>% 
-  a
+data3_Hop <- data3_Hop %>% 
+  mutate(BRIDGE = 'Hop',
+         L2 = case_when(
+           RECIPIENT_CHAINID == '137' ~ "polygon",
+           RECIPIENT_CHAINID == '42161' ~ "arbitrum",
+           TRUE ~ "optimism"
+         )) %>% 
+  select(DATE, SYMBOL, L2, USER_ADDRESSES, AMOUNT, AMOUNT_USD, BRIDGE)
+
+data3_L2 <- data3_L2 %>% 
+  mutate(BRIDGE = 'Native')
+
+data4 <- data3_Hop %>% 
+  union_all(data3_L2)
 
 to.remove <- ls()
-to.remove <- c(to.remove[!grepl("data", to.remove)], "to.remove")
+to.remove <- c(to.remove[!grepl("data4", to.remove)], "to.remove")
 rm(list=to.remove)
-
 
 
 #Analysis:
 
-# something like for each bridge 
+#necesitamos un gráfico que compare siempre hop contra native pero variando dos variables:
+# 1) la L2 de destino, 2) la moneda que se envía. 
+# Con ese marco podemos comparar 3 cosas:
 # - unique users daily 
 # - number of transactions daily 
 # - avg amount of assets daily
