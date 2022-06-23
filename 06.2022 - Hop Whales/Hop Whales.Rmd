@@ -1,9 +1,10 @@
 ---
-title: "Solana Outages"
+title: "Hop Whales"
 output: 
   flexdashboard::flex_dashboard:
-    vertical_layout: scroll
-    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Solana%20Outages
+    orientation: columns
+    vertical layout: fill
+    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Hop%20Whales
 runtime: shiny
 ---
 <style>
@@ -26,84 +27,106 @@ library(rsconnect)
 ```{r data, include=FALSE}
 options(scipen=999)
 
-data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/17b75965-83c6-4994-89f4-002dc05326bb/data/latest")
+data_Hop <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/a3b95431-4c5b-4ae7-b8d6-88a713cc76bb/data/latest")
+data_L2 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/474b623d-f32c-4162-91df-af773cf24cae/data/latest")
 
-str(data) 
+data2_Hop <- rawToChar(data_Hop$content)
+data2_L2 <- rawToChar(data_L2$content)
 
-data2 <- rawToChar(data$content)
+data3_Hop <- as_tibble(fromJSON(data2_Hop, flatten = TRUE))
+data3_L2 <- as_tibble(fromJSON(data2_L2, flatten = TRUE))
 
-data3 <- as_tibble(fromJSON(data2, flatten = TRUE))
+data3_Hop$DATE <- as_date(data3_Hop$DATE)
+data3_L2$DATE <- as_date(data3_L2$DATE)
 
-data3$DATE1 <- as_date(data3$DATE1)
+data3_Hop <- data3_Hop %>% 
+  mutate(BRIDGE = 'Hop',
+         L2 = case_when(
+           RECIPIENT_CHAINID == '137' ~ "polygon",
+           RECIPIENT_CHAINID == '42161' ~ "arbitrum",
+           TRUE ~ "optimism"
+         )) %>% 
+  select(DATE, SYMBOL, L2, USER_ADDRESSES, TRANSACTIONS, AVG_AMOUNT_USD, BRIDGE)
 
-data4 <- data3 %>%
-  select(dates = DATE1,
-         SOL_PRICE,
-         TRANSACTIONS,
-         amount_converted_stable = AMOUNT_CONVERTED,
-         swaps_stable = SWAPS_TO_STABLECOIN,
-         LABEL_TYPE,
-         counts = 'COUNT(*)'
-         )
- 
-data4 <- data4 %>%
-  pivot_wider(names_from = LABEL_TYPE, values_from = counts)
+data3_L2 <- data3_L2 %>% 
+  mutate(BRIDGE = 'Native')
 
+data4 <- data3_Hop %>% 
+  union_all(data3_L2)
 
-data4[is.na(data4)] <- 0
+Tokens = c("DAI", "USDT", "USDC", "MATIC", "ETH")
 
-Variables = c("SOL_PRICE", "TRANSACTIONS", "amount_converted_stable", "swaps_stable", "cex", "nft")
+L2 = c("polygon", "arbitrum", "optimism")
 ```
 
 
 Column {.sidebar data-width=200}
 -----------------------------------------------------------------------
 ```{r}
-selectInput("Variable", label = "Select variable:", choices = Variables)
+selectInput("Token", label = "Select token:", choices = Tokens)
 
+selectInput("L2", label = "Select L2:", choices = L2)
 ```
 
 
-Column {data-width=400}
+Column {data-width=300}
 -----------------------------------------------------------------------
-### Introduction & analysis
+### Description
 
-Solana experienced outages on 5/1 and 6/1, where validators were forced to restart the network. After the restart happens during these outages, how do users on the network generally respond?
+In this dashboard you can choose your L2 and token of interest and see if whales and users are choosing Hop protocol (https://hop.exchange/) to go to Ethereum L2s (Arbitrum, Optimism, Polygon) vs their native bridges.
 
-As can be seen in the chart below (and using the left selection panel), these outages don't appear to have a direct effect on some variables of interest, namely: the price of SOL (SOL_PRICE), the amount of daily transactions (TRANSACTIONS), the amount of USD value converted to stablecoins (amount_converted_stable), the amounts of swaps to stablecoins performed (swaps_stable), the amount of transactions directed to centralized exchanges (cex), and the amount of transactions directed to NFT minting contracts (nft).
+You'll be able to see these comparisons in three different variables: unique daily users, daily transactions, and average amount moved (measured in USD value).
 
-However, on chain data analysis of these variables doesn't allow us to infer the same for every variable. Following these events users don't change their behavior related to holding SOL (its price doesn't respond to these events), stablecoin related activity (users don't convert SOL or other tokens in fear of losing value) and NFT activity. 
-
-On the other hand, it appears that these outages do have some incidence on the amount of transactions performed the following days (which grows up), many of which are transfers to centralized exchanges. What one may think about this is that outages produce a big amount of fear on Solana users, which motivates them to move their savings or assets offchain and into a trusted third parties that don't suffer from blakouts.
+Data was queried from https://flipsidecrypto.xyz/
 
 
-### Data
+### Unique daily users
 
 ```{r}
 renderPlot({
 data4 %>%
-  ggplot(aes(dates, data4[[input$Variable]])) +
+  filter(SYMBOL == input$Token,
+         L2 == input$L2) %>% 
+  ggplot(aes(DATE, USER_ADDRESSES, color = BRIDGE)) +
   geom_line(size=1) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-05-01")), linetype="dashed", size=1) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-06-01")), linetype="dashed", size=1) +
-  scale_x_date(date_breaks = "1 week", date_minor_breaks = "1 week", date_labels = "%d-%b-%Y") +
-  xlab("dates") +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
   ylab("")
 })
 ```
 
 
-### References
+Column {data-width=300}
+-----------------------------------------------------------------------
 
-https://flipsidecrypto.xyz/
+### Daily transactions
 
-https://explorer.solana.com/
+```{r}
+renderPlot({
+data4 %>%
+  filter(SYMBOL == input$Token,
+         L2 == input$L2) %>% 
+  ggplot(aes(DATE, TRANSACTIONS, color = BRIDGE)) +
+  geom_line(size=1) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
+  ylab("")
+})
+```
 
 
 
+### Avg amount (USD value)
 
-
-
-
-
-
+```{r}
+renderPlot({
+data4 %>%
+  filter(SYMBOL == input$Token,
+         L2 == input$L2) %>% 
+  ggplot(aes(DATE, AVG_AMOUNT_USD, color = BRIDGE)) +
+  geom_line(size=1) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
+  ylab("")
+})
+```

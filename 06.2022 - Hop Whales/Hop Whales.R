@@ -1,6 +1,3 @@
-# Are whales choosing Hop to go to L2s? Or are they choosing the native bridges? 
-# Compare Hop vs the native bridges for Polygon, Optimism, and Arbitrum over the following metrics: unique users on each, frequency of use, and the average amount of assets moved on each?
-
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -30,7 +27,7 @@ data3_Hop <- data3_Hop %>%
            RECIPIENT_CHAINID == '42161' ~ "arbitrum",
            TRUE ~ "optimism"
          )) %>% 
-  select(DATE, SYMBOL, L2, USER_ADDRESSES, AMOUNT, AMOUNT_USD, BRIDGE)
+  select(DATE, SYMBOL, L2, USER_ADDRESSES, TRANSACTIONS, AVG_AMOUNT_USD, BRIDGE)
 
 data3_L2 <- data3_L2 %>% 
   mutate(BRIDGE = 'Native')
@@ -45,18 +42,32 @@ rm(list=to.remove)
 
 #Analysis:
 
-#necesitamos un gráfico que compare siempre hop contra native pero variando dos variables:
-# 1) la L2 de destino, 2) la moneda que se envía. 
-# Con ese marco podemos comparar 3 cosas:
-# - unique users daily 
-# - number of transactions daily 
-# - avg amount of assets daily
+# Unique users daily:
+data4 %>%
+  filter(SYMBOL == 'ETH',
+         L2 == 'polygon') %>% 
+  ggplot(aes(DATE, USER_ADDRESSES, color = BRIDGE)) +
+  geom_line(size=1) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
+  ylab("")
 
+# Number of daily transactions:
+data4 %>%
+  filter(SYMBOL == 'ETH',
+         L2 == 'polygon') %>% 
+  ggplot(aes(DATE, TRANSACTIONS, color = BRIDGE)) +
+  geom_line(size=1) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
+  ylab("")
 
-
-#References:
-
-# https://chainlist.org/
-# https://hop.exchange/
-# https://github.com/hop-protocol/hop/blob/develop/packages/core/src/addresses/mainnet.ts
-# https://flipsidecrypto.xyz/
+# Avg amount of assets daily:
+data4 %>%
+  filter(SYMBOL == 'ETH',
+         L2 == 'polygon') %>% 
+  ggplot(aes(DATE, AVG_AMOUNT_USD, color = BRIDGE)) +
+  geom_line(size=1) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y") +
+  xlab("") +
+  ylab("")
