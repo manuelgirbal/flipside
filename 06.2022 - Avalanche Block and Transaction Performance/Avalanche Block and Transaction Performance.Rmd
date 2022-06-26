@@ -1,0 +1,74 @@
+---
+title: "Avalanche Block and Transaction Performance
+"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical layout: fill
+    source_code: 
+runtime: shiny
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+library(shiny)
+library(plotly)
+library(DT)
+library(rsconnect)
+```
+
+```{r data, include=FALSE}
+
+
+```
+
+
+
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+### Description
+
+a
+a
+
+Data was queried from https://flipsidecrypto.xyz/
+
+
+### A
+
+```{r}
+renderPlot({
+
+})
+```
+
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+
+### a
+
+```{r}
+renderPlot({
+
+})
+```
+
+
+
+### A
+
+```{r}
+renderPlot({
+
+})
+```

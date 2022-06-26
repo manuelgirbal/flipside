@@ -1,0 +1,29 @@
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+
+#Disabling scientific notation:
+options(scipen=999)
+
+#Download data from API (this API is a table queried from Flipside's database: Velocity)
+data_1 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/898b643f-c654-4e0c-8007-2a07aaadc4de/data/latest")
+data_2 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/2bc0867d-d760-49d6-8c35-b5f4fd2c6dd4/data/latest")
+data_3 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/bc15220d-d653-4025-8003-c98dd281f111/data/latest")
+
+data2_1 <- rawToChar(data_1$content)
+data2_2 <- rawToChar(data_2$content)
+data2_3 <- rawToChar(data_3$content)
+
+data3_1 <- as_tibble(fromJSON(data2_1, flatten = TRUE))
+data3_2 <- as_tibble(fromJSON(data2_2, flatten = TRUE))
+data3_3 <- as_tibble(fromJSON(data2_3, flatten = TRUE))
+
+data3_1$DATE <- as_date(data3_1$DATE)
+data3_3$DATE <- as_date(data3_3$DATE)
+
+
+#Analysis:
+
+
