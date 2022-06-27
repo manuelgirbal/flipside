@@ -6,7 +6,7 @@
 select date(block_timestamp) as date,
        hour(block_timestamp) as hour,
        count(*)/3600 as TPS,
-       avg(gas_price) as avg_gas_price, --> to properly measur it in AVAX this has to be divided by 1000000000
+       avg(gas_price) as avg_gas_price, --> to properly measure it in AVAX this has to be divided by 1000000000
        avg(tx_fee) as avg_tx_fee,
        avg(avax_value) as avg_avax_value
 from avalanche.core.fact_transactions

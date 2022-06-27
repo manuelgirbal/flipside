@@ -3,9 +3,8 @@ title: "Avalanche Block and Transaction Performance
 "
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical layout: fill
-    source_code: 
+    orientation: rows
+    source_code: https://github.com/manuelgirbal/flipside/tree/main/06.2022%20-%20Avalanche%20Block%20and%20Transaction%20Performance
 runtime: shiny
 ---
 <style>
@@ -52,44 +51,130 @@ data3_3 <- data3_3 %>%
 ```
 
 
+Sidebar {.sidebar}
+=======================================================================
 
-
-Column {data-width=300}
------------------------------------------------------------------------
 ### Description
 
-a
-a
+In this dashboard, we'll explore Avalanche data and dig into the blockchain's performance at a high level. Avalanche supports quick block finality and high TPS, so we'll see this in block and transaction performance since 2022/06/20.
 
-Data was queried from https://flipsidecrypto.xyz/
+What this dashboard displays:
+
+* Average number of transactions per block
+
+* Max and min number of transactions we've seen in a block
+
+* Transaction gas price over time (to properly measure it in AVAX this has to be divided by 1000000000)
+
+* Average transactions per second by hour
+
+* Average time between blocks over time
+
+* Average transaction fees
+
+* Average AVAX amount transacted
+
+Data queried from:
+https://flipsidecrypto.xyz
+
+Author: manuel_g_g
 
 
-### A
+Dashboard
+=======================================================================
 
-```{r}
-renderPlot({
-
-})
-```
-
-
-Column {data-width=300}
+Row
 -----------------------------------------------------------------------
 
-### a
+### A {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(data3_2$AVG_TX, "AVG number of transactions per block", color = "blue")
+})
+```
+
+### B {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(data3_2$MAX_TX, "MAX number of transactions in a block", color = "navy")
+})
+```
+
+### C {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(data3_2$MIN_TX, "MIN number of transactions in a block", color = "teal")
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Transaction gas price over time
 
 ```{r}
 renderPlot({
+  data3_1 %>% 
+  ggplot(aes(DATE_HOUR, AVG_GAS_PRICE)) +
+  geom_line(size=1, color = "#00AFBB") +
+  scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "1 hour", date_labels = "%d-%b")
+})
+```
 
+### AVG transactions per second by hour
+
+```{r}
+renderPlot({
+  data3_1 %>% 
+  ggplot(aes(DATE_HOUR, TPS)) +
+  geom_line(size=1, color = "steelblue") +
+  scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "1 hour", date_labels = "%d-%b")
 })
 ```
 
 
 
-### A
+### AVG seconds between blocks (hourly grouped) 
 
 ```{r}
 renderPlot({
-
+  data3_3 %>% 
+  ggplot(aes(DATE_HOUR, AVG_DIFFERENCE_IN_SECONDS)) +
+  geom_line(size=1, color = "#009E73") +
+  scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "1 hour", date_labels = "%d-%b")
 })
 ```
+
+Row
+-----------------------------------------------------------------------
+
+### AVG transaction fees (in AVAX)
+
+```{r}
+renderPlot({
+  data3_1 %>% 
+  ggplot(aes(DATE_HOUR, AVG_TX_FEE)) +
+  geom_line(size=1, color = "#D55E00") +
+  scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "1 hour", date_labels = "%d-%b")
+})
+```
+
+
+
+### AVG AVAX value transacted
+
+```{r}
+renderPlot({
+  data3_1 %>% 
+  ggplot(aes(DATE_HOUR, AVG_AVAX_VALUE)) +
+  geom_line(size=1, color = "#E69F00") +
+  scale_x_datetime(date_breaks = "1 day", date_minor_breaks = "1 hour", date_labels = "%d-%b")
+})
+```
+
+
+
+

@@ -49,7 +49,9 @@ data3_1 %>%
 #What's the average number of transactions per block? 
 #What's the max number of transactions we've seen in a block and the minimum?
 
-DT::datatable(data3_2, rownames = FALSE)
+# valueBox(value, subtitle, icon = NULL, color = "aqua", width = 4,
+#          href = NULL)
+
 
 #Show the average time between blocks over time
 data3_3 %>% 
