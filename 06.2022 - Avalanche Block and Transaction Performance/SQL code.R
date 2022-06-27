@@ -24,9 +24,19 @@ where date(block_timestamp) > '2022-06-19'
 
 3)
 #Show the average time between blocks over time
-select date(block_timestamp) as date,
-    block_timestamp,
+with avg_time as 
+  (
+  select date(block_timestamp) as date,
+    hour(block_timestamp) as hour,
     time(block_timestamp) as time, 
     timediff(second, time(block_timestamp), lag(time(block_timestamp), 1) over (order by block_timestamp))*-1  as difference_in_seconds
-from avalanche.core.fact_blocks
-where date > '2022-06-19'
+  from avalanche.core.fact_blocks
+  where date > '2022-06-19'
+  )
+
+select date,
+    hour,
+    AVG(difference_in_seconds)  as avg_difference_in_seconds
+from avg_time
+where difference_in_seconds > 0
+group by date, hour
