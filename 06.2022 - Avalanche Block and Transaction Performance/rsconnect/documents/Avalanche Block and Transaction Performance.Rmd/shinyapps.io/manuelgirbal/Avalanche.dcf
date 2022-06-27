@@ -1,0 +1,13 @@
+name: Avalanche
+title: Avalanche
+username:
+account: manuelgirbal
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6558779
+bundleId: 6048221
+url: https://manuelgirbal.shinyapps.io/Avalanche/
+when: 1656363218.89389
+lastSyncTime: 1656363218.89389
+asMultiple: FALSE
+asStatic: FALSE
