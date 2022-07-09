@@ -12,11 +12,9 @@ data_2 <- rawToChar(data_1$content)
 
 data_3 <- as_tibble(fromJSON(data_2, flatten = TRUE))
 
-data_3$MATIC_DATE_HOUR <- as.POSIXct(data_3$MATIC_DATE_HOUR)
+data_3$MATIC_DATE_HOUR <- as_datetime(data_3$MATIC_DATE_HOUR)
 
 
-
-#ETH and BTC daily price (from https://coinmarketcap.com/):
 maticprice <- read.csv("07.2022 - Polygon Fees/matic-usd-max.csv")
 ethprice <- read.csv("07.2022 - Polygon Fees/eth-usd-max.csv")
 
@@ -41,8 +39,16 @@ data_3$DATES <- as_date(data_3$MATIC_DATE_HOUR)
 finaldata <- data_3 %>%
   left_join(maticprice, by = "DATES") %>% 
   left_join(ethprice, by = "DATES") %>% 
-  mutate(matic_usd_fee = AVG_FEE_MATIC*maticprice,
-         eth_usd_fee = AVG_FEE_ETH*ethprice)
+  mutate(MATIC_USD_FEE = AVG_FEE_MATIC*maticprice,
+         ETH_USD_FEE = AVG_FEE_ETH*ethprice) %>% 
+  select(DATE_HOUR = MATIC_DATE_HOUR,
+         MATIC_TRANSACTIONS,
+         AVG_FEE_MATIC,
+         MATIC_USD_FEE,
+         ETH_TRANSACTIONS,
+         AVG_FEE_ETH,
+         ETH_USD_FEE
+  )
 
 to.remove <- ls()
 to.remove <- c(to.remove[!grepl("finaldata", to.remove)], "to.remove")
@@ -52,15 +58,36 @@ rm(list=to.remove)
 ##Analysis:
 
 
---Visualize transaction fees on Polygon since July 1, 2022.
---Compare these to fees on Ethereum over the same time period - are they correlated? Do they diverge significantly at any points? Provide analysis as to why you think this might be.
---We will be giving the top 15 submissions a 125 $USDC payout, with the best getting the grand prize of 2,000 $USDC and 2nd place taking 1,000 $USDC
 
---Comparison between transaction fees, we compare fees in USD value measured in today exchange rate
+#Fees comparison:
+finaldata %>%
+  ggplot(aes(DATE_HOUR)) +
+  geom_line(aes(y=MATIC_USD_FEE), size=1, color = "#D55E00") +
+  geom_line(aes(y=ETH_USD_FEE), size=1, color = "#00AFBB") +
+  theme_minimal() +
+  labs(title = "Polygon vs Ethereum transaction fees (in USD vaue)",
+       y="USD value",
+       x="Date")
 
---this table contains transaction level data for the polygon blockchain. 
---each transaction will have a unique transaction hash, along with transactions fees and a matic/eth value transferred when applicable. 
---transactions may be native matic/eth transfers or interactions with contract addresses. 
+cor.test(finaldata$MATIC_USD_FEE, finaldata$ETH_USD_FEE, method = "pearson")
 
---ver si sumo un agrupamiento intermedio por tipo de transacción o la data que contiene
---En R convertir las fees a USD bajando data de coinmarketcap
+
+#Amount of transactions comparison:
+finaldata %>%
+  ggplot(aes(DATE_HOUR)) +
+  geom_line(aes(y=MATIC_TRANSACTIONS), size=1, color = "#D55E00") +
+  geom_line(aes(y=ETH_TRANSACTIONS), size=1, color = "#00AFBB") +
+  theme_minimal() +
+  labs(title = "Polygon vs Ethereum transactions",
+       y="Transactions",
+       x="Date")
+
+cor.test(finaldata$MATIC_TRANSACTIONS, finaldata$ETH_TRANSACTIONS, method = "pearson")
+
+
+#Comparison between fees and amount of transactions on same blockchain:
+cor.test(finaldata$MATIC_TRANSACTIONS, finaldata$MATIC_USD_FEE, method = "pearson")
+
+cor.test(finaldata$ETH_TRANSACTIONS, finaldata$ETH_USD_FEE, method = "pearson")
+
+
