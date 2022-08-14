@@ -1,0 +1,101 @@
+---
+title: 'Snapshot presents: Proof of Humanity'
+author: "manuel_g_g"
+date: '2022-08-14'
+output: html_document
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(flexdashboard)
+```
+
+```{r data, include=FALSE}
+options(scipen=999)
+
+data <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/a40c5db4-ab8a-4d71-930d-057fcaffbe17/data/latest")
+
+data <- rawToChar(data$content)
+
+data <- as_tibble(fromJSON(data, flatten = TRUE))
+
+data$PROPOSAL_START_TIME <- as_date(data$PROPOSAL_START_TIME)
+
+proposals <- data %>%
+  group_by(PROPOSAL_ID, PROPOSAL_TITLE) %>% 
+  summarise(n = n(),
+            date = first(PROPOSAL_START_TIME)) %>%
+  arrange(desc(n))
+
+voters <- data %>%
+  group_by(VOTER) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+
+authors <- data %>%
+  group_by(PROPOSAL_ID, PROPOSAL_AUTHOR) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+
+authors <- authors %>%
+  group_by(PROPOSAL_AUTHOR) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+```
+
+# Introduction
+[Proof of Humanity (POH)](https://gov.proofofhumanity.id/) is a DAO that takes care of the [Proof of Humanity protocol](https://www.proofofhumanity.id/), a system developed on Ethereum's mainnet that combines webs of trust with reverse Turing tests and dispute resolution to create a sybil-proof list of humans. Members of this curated list can benefit from subsequent implementations, such as the [Universal Basic Income (UBI)](https://www.coingecko.com/es/monedas/universal-basic-income) token, which drops every minute.
+
+Using [Snapshot's data](https://snapshot.org/#/poh.eth) gently provided by [Flipside Crypto](https://flipsidecrypto.xyz/), we'll take a look into their governance highlights. 
+
+# Data
+Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing all votes casted on all POH related proposals:
+
+```{sql eval=FALSE}
+select * 
+from ethereum.core.ez_snapshot 
+where space_id = 'poh.eth' or space_id = 'proofofhumanity.eth'
+```
+
+# Explaining POH's governance:
+So, how does this DAO works? 
+Well, 
+#First should explain what is this DAO, and the 3 phases mechanism (explain "hip").
+#Then delegated votes (and how this are counted as one here)
+#Some hips have multiple options...
+
+
+
+
+
+
+
+
+
+
+#### **Key Findings**
+
+* The majority of whales didn't sell nor buy ETH during this period.
+* Many of those that sold ETH or increased their position made it in amounts that implied less than a 10% change in their balance.
+* Most of the ETH was used for swapping with wETH and sending ETH to centralized exchanges.
+* Many transactions were sent to Tornado Cash, which implies that many whales look for privacy when they want to use their ETH.
+
+
+Row {data-height=100}
+-------------------------------------
+#### **Analysis Details**
+
+Date of analysis: 27th July 2022
+
+Contact: Twitter @m_i_g_g
+
