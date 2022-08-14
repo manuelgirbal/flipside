@@ -4,6 +4,8 @@ library(tidyverse)
 library(lubridate)
 library(plotly)
 library(flexdashboard)
+library(knitr)
+
 
 
 options(scipen=999)
@@ -19,45 +21,20 @@ data$PROPOSAL_START_TIME <- as_date(data$PROPOSAL_START_TIME)
 
 
 ### Analysis:
-#First should explain what is this DAO, and the 3 phases mechanism (explain "hip").
-#Then delegated votes (and how this are counted as one here)
-#Some hips have multiple options...
-
 
 ##Basics:
-a <- n_distinct(data$PROPOSAL_ID)
-b <- n_distinct(data$PROPOSAL_AUTHOR)
-c <- n_distinct(data$VOTER)
-
 df <- data.frame(
-  x = c(a, b, c),
-  y = c(1,1,1),
-  h = rep(4, 6),
-  w = rep(6, 6),
-  info = c("Amount of proposals",
-           "Amount of authors",
-           "Amount of voters"),
-  color = factor(1:3)
+  "Amount of proposals" = n_distinct(data$PROPOSAL_ID),
+  "Amount of authors" = n_distinct(data$PROPOSAL_AUTHOR),
+  "Amount of voters" = n_distinct(data$VOTER)
 )
-
-
-ggplot(df, aes(x, y, height = h, width = w, label = info, fill = color)) +
-  geom_tile() +
-  geom_text(color = "white", fontface = "bold") +
-  coord_fixed() + 
-  scale_fill_brewer(type = "qual",palette = "Dark2") +
-  theme_void() +
-  guides(fill = "none")
-
-
-valueBox(n_distinct(data$PROPOSAL_ID), "Amount of proposals", color = "blue")
 
 
 ##Proposals:
 proposals <- data %>%
   group_by(PROPOSAL_ID, PROPOSAL_TITLE) %>% 
   summarise(n = n(),
-            date = first(PROPOSAL_START_TIME)) %>% #doesn't take into account delegated votes, just casted votes by any account (counted as one)
+            date = first(PROPOSAL_START_TIME)) %>% 
   arrange(desc(n))
 
 head(proposals, 10)
@@ -81,7 +58,12 @@ data %>%
   filter(PROPOSAL_ID == '0x8935dab616d261bf36671ab44c64f11efa43dbe3d41291aa1e6e62158ce451cc') %>%
   mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
   group_by(VOTE_OPTION) %>%  
-  summarise(n = n())
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Accept changes",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
+
 
 data %>% 
   filter(PROPOSAL_ID == '0x8935dab616d261bf36671ab44c64f11efa43dbe3d41291aa1e6e62158ce451cc') %>% 
@@ -91,12 +73,19 @@ data %>%
 
 
 
+
+
+
 #Change of Arbitrator (another example)
 data %>% 
   filter(PROPOSAL_ID == '0xbd51e65898af245dfa62030c90921038b9c302346bdd149f4eefe33abe11fafe') %>%
   mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
   group_by(VOTE_OPTION) %>%  
-  summarise(n = n())
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Pass to Phase 3",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
 
 data %>% 
   filter(PROPOSAL_ID == '0xbd51e65898af245dfa62030c90921038b9c302346bdd149f4eefe33abe11fafe') %>% 
@@ -110,7 +99,11 @@ data %>%
   filter(PROPOSAL_ID == 'QmZvAAvKMQ6VihJuUg2XBfZkynosMzV4aeAYAZutSsK4Kk') %>%
   mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
   group_by(VOTE_OPTION) %>%  
-  summarise(n = n())
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Pass to Phase 3",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
 
 data %>% 
   filter(PROPOSAL_ID == 'QmZvAAvKMQ6VihJuUg2XBfZkynosMzV4aeAYAZutSsK4Kk') %>% 
@@ -120,13 +113,16 @@ data %>%
 
 
 
-##Voters (of total users - active DAO or not?):
+##Voters:
 voters <- data %>%
   group_by(VOTER) %>% 
   summarise(n = n()) %>% 
   arrange(desc(n))
 
 head(voters, 10)
+
+
+
 
 ##Authors:
 authors <- data %>%

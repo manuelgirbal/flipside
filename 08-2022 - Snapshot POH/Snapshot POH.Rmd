@@ -1,7 +1,7 @@
 ---
 title: 'Snapshot presents: Proof of Humanity'
 author: "manuel_g_g"
-date: '2022-08-14'
+date: '2022-08-13'
 output: html_document
 ---
 <style>
@@ -18,6 +18,7 @@ library(tidyverse)
 library(lubridate)
 library(plotly)
 library(flexdashboard)
+library(knitr)
 ```
 
 ```{r data, include=FALSE}
@@ -31,8 +32,14 @@ data <- as_tibble(fromJSON(data, flatten = TRUE))
 
 data$PROPOSAL_START_TIME <- as_date(data$PROPOSAL_START_TIME)
 
+df <- data.frame(
+  "Amount of proposals" = n_distinct(data$PROPOSAL_ID),
+  "Amount of authors" = n_distinct(data$PROPOSAL_AUTHOR),
+  "Amount of voters" = n_distinct(data$VOTER)
+)
+
 proposals <- data %>%
-  group_by(PROPOSAL_ID, PROPOSAL_TITLE) %>% 
+  group_by(PROPOSAL_TITLE) %>% 
   summarise(n = n(),
             date = first(PROPOSAL_START_TIME)) %>%
   arrange(desc(n))
@@ -53,10 +60,15 @@ authors <- authors %>%
   arrange(desc(n))
 ```
 
+![.](https://app.proofofhumanity.id/images/open-graph-image.png){width=50%}
+
 # Introduction
-[Proof of Humanity (POH)](https://gov.proofofhumanity.id/) is a DAO that takes care of the [Proof of Humanity protocol](https://www.proofofhumanity.id/), a system developed on Ethereum's mainnet that combines webs of trust with reverse Turing tests and dispute resolution to create a sybil-proof list of humans. Members of this curated list can benefit from subsequent implementations, such as the [Universal Basic Income (UBI)](https://www.coingecko.com/es/monedas/universal-basic-income) token, which drops every minute.
+[Proof of Humanity (POH)](https://gov.proofofhumanity.id/) is a DAO that, since early 2021, takes care of the [Proof of Humanity protocol](https://www.proofofhumanity.id/), a system developed on Ethereum's mainnet that combines webs of trust with reverse Turing tests and dispute resolution to create a sybil-proof list of humans. Members of this curated list can benefit from subsequent implementations, such as the [Universal Basic Income (UBI)](https://www.coingecko.com/es/monedas/universal-basic-income) token, which drops every minute.
 
 Using [Snapshot's data](https://snapshot.org/#/poh.eth) gently provided by [Flipside Crypto](https://flipsidecrypto.xyz/), we'll take a look into their governance highlights. 
+
+![.](https://uploads-ssl.webflow.com/5fd2301a2f3de083f679382b/5ffde3380512293b818c7ecc_Graphic%20(UBI%20Logos)%20(1).svg){width=50%}
+
 
 # Data
 Data was queried from Flipside Crypto's Velocity database, and the SQL code used is shown below. The result of this chunk is a dataset containing all votes casted on all POH related proposals:
@@ -68,34 +80,145 @@ where space_id = 'poh.eth' or space_id = 'proofofhumanity.eth'
 ```
 
 # Explaining POH's governance:
-So, how does this DAO works? 
-Well, 
-#First should explain what is this DAO, and the 3 phases mechanism (explain "hip").
-#Then delegated votes (and how this are counted as one here)
-#Some hips have multiple options...
+So, how does this DAO works? Each proposal (called HIP for "humanity improvement proposal") goes through 3 stages, two of which are voted on Snapshot (none of them is voted on-chain):
+
+1. Phase 1 (Ideation): consists on a post on their governance forum, detailing the proposal objective and facilitating an initial, informal discussion. For it to pass to Phase 2, it has to gain attention from the community, as there're no formal requirements.
+
+2. Phase 2 (Specification): voted on Snapshot, it's a signalling poll that last 3 days, and, for it to pass to Phase 3, there must be one outcome with a relative majority of votes (of course, it has to include the option "Make no changes").
+
+3. Phase 3 (Consensus): a binding vote on Snapshot that lasts 7 days for a refined and improved proposal. For proposals to be accepted in this final phase, there must be one outcome with a relative majority of votes. If the relative majority of votes on the proposal indicates the result Make no changes, the proposal will not be accepted and considered closed. 
+
+It's also important to note that each registered person has a vote, but also that this democracy is liquid, so any of them can delagate their vote to another registered human. Note that this aspect is not taken into account in this dataset, so any vote that we see here appears to count as one but might have more voting power.
 
 
+**Governance summary:**
+
+* Proposals go through 3 stages, 2 of them are voted on Snapshot and one of those is binding.
+* All registered humans have one vote.
+* Votes can be delegated to other registered humans.
+
+# Analysis
+So, let's see some aspects of this DAO's governance:
+
+### Basic statistics:
+
+Let's see some basic summary statistics:
+
+```{r echo=FALSE}
+kable(df)
+```
+
+So, we have a total of 2344 unique voters for 85 Snapshot votes (if we count both Phase 2 and Phase 3 votes), and 25 different authors. 
+But, as it's commonly known in the DAO and Web 3 space, not every member participates actively, and not even every person who has voted once votes on every proposal. So, how many votes have each proposal received? 
+
+```{r echo=FALSE}
+kable(head(proposals, 10))
+```
+
+Here we can see that the most voted proposals received more than 700 votes, and we can also appreciate how the participacion has increased over time, despite some rough votes at the beginning of 2021:
+
+```{r echo=FALSE, fig.width = 12}
+proposals %>% 
+  ggplot(aes(date, n))+
+  geom_line(size=1, color = "#00AFBB")+
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", date_labels = "%b-%Y")+
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"))+
+  ggtitle("Amount of voters per proposal")+
+  xlab("Date")+
+  ylab("Voters")
+```
 
 
+### Voters and authors:
+And what about voters and authors? If we take top ten users by the amount of proposals in which they participated, we can see that almost all of them voted in at least half of these 85 voting sessions. Given that voting is not mandatory, this level of top user involvement must not be underrated:
+
+```{r echo=FALSE}
+kable(head(voters, 10))
+```
+
+As regards to authors, it appears that there are some users that tend to write many of these proposals, but the taks is not highly centralized at all, given that in the top ten authors (of a total of 25) have written at least 3 proposals each: 
+
+### Authors:
+```{r echo=FALSE}
+kable(head(authors, 10))
+```
+
+### Proposals:
+Finally, we can dive into the content of some of these proposals:
+
+Take, for example, the most voted proposal up to date, [HIP-50](https://snapshot.org/#/poh.eth/proposal/0x8935dab616d261bf36671ab44c64f11efa43dbe3d41291aa1e6e62158ce451cc), which states: "Clarify which of Proof of Humanity Telegram group belongs to the DAO".
+
+This might be a little confusing, and Snapshot data cannot tell us a lot about the reason for this proposal being the most voted. As an active member of the DAO, I can say that there's quite a story behind this, and that the outcome was more symbolic than practical, as it represented a political dispute between two sides. The outcome reflects this, as it was a pretty disputed vote, which ended up in the passing of the proposal:
 
 
+#### HIP-50 
+```{r echo=FALSE}
+kable(
+  data %>% 
+  filter(PROPOSAL_ID == '0x8935dab616d261bf36671ab44c64f11efa43dbe3d41291aa1e6e62158ce451cc') %>%
+  mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
+  group_by(VOTE_OPTION) %>%  
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Accept changes",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
+)
+```
 
 
+#### HIP-49
+Another example of this increasing politization was a [HIP-49](https://snapshot.org/#/poh.eth/proposal/0xbd51e65898af245dfa62030c90921038b9c302346bdd149f4eefe33abe11fafe), which aimed at changing the smart contract that deals with disputes to the profile submission and removals with "a new one that serves better the interests of the Proof of Humanity community".
+Note that this time the proposal, which was driven by some of the same people who won HIP-50 vote, couldn't make it to Phase 3, as it lost the vote in Phase 2:
+
+```{r echo=FALSE}
+kable(
+  data %>% 
+  filter(PROPOSAL_ID == '0xbd51e65898af245dfa62030c90921038b9c302346bdd149f4eefe33abe11fafe') %>%
+  mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
+  group_by(VOTE_OPTION) %>%  
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Pass to Phase 3",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
+)
+```
 
 
-#### **Key Findings**
+#### HIP-8
+However, not every proposal in this DAO is a political dispute, sometimes the topic discussed is more technical, as [Phase 2](https://snapshot.org/#/poh.eth/proposal/QmZvAAvKMQ6VihJuUg2XBfZkynosMzV4aeAYAZutSsK4Kk) of what was later known as [HIP-8](https://snapshot.org/#/poh.eth/proposal/QmTZw1SnrQ7PTvvP6nf6tnNPFdKTKBJSnhEHZBzMBGqeeD) shows us. In this case, what was being discussed were some technical characteristics of video submission, as each member of POH has to upload a video stating that he/she is a human that's not already registered:
 
-* The majority of whales didn't sell nor buy ETH during this period.
-* Many of those that sold ETH or increased their position made it in amounts that implied less than a 10% change in their balance.
-* Most of the ETH was used for swapping with wETH and sending ETH to centralized exchanges.
-* Many transactions were sent to Tornado Cash, which implies that many whales look for privacy when they want to use their ETH.
+```{r echo=FALSE}
+kable(
+  data %>% 
+  filter(PROPOSAL_ID == 'QmZvAAvKMQ6VihJuUg2XBfZkynosMzV4aeAYAZutSsK4Kk') %>%
+  mutate(VOTE_OPTION = as.numeric(VOTE_OPTION)) %>% 
+  group_by(VOTE_OPTION) %>%  
+  summarise(n = n()) %>% 
+  mutate(VOTE_OPTION = case_when(
+    VOTE_OPTION == 1 ~ "Pass to Phase 3",
+    VOTE_OPTION == 2 ~ "Make no change"
+  ))
+)
+```
 
 
-Row {data-height=100}
--------------------------------------
-#### **Analysis Details**
+So, all in all, voting in POH DAO seems to be pretty fun, as a wide variety of topics are discussed and voted, ranging from purely political disputes to quite technical aspects, and, what's more important, the outcomes are always unknown and votes are many times quite disputed.
 
-Date of analysis: 27th July 2022
 
-Contact: Twitter @m_i_g_g
+# Key Takeaways
+
+* Participation in the DAO is increasing
+* Votes tend to be disputed
+* A variety of topics are discussed and voted
+
+
+# Analysis Details
+[Code](https://github.com/manuelgirbal/flipside/tree/main/08-2022%20-%20Snapshot%20POH)
+
+Twitter @m_i_g_g
 
