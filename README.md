@@ -1,7 +1,8 @@
 # flipside
 Data analysis for Flipside Crypto bounty hunts
 
-flipsidecrypto.xyz 
+[flipsidecrypto.xyz 
+](https://flipsidecrypto.xyz/)
 
 Find some of my work here:
 
